@@ -37,7 +37,7 @@ func (i *Illegal) Error() string { return "trust illegal" }
 // Trust 结构体, 加密过程信息
 type Trust struct {
 	key      string
-	duration int // 上下都允许的时间范围差
+	duration int // 上下都允许的时间范围差, 单位为 s
 }
 
 // DecodeOne 解码, hash 结果和时间戳放在一起
