@@ -13,3 +13,25 @@ Decode 系列函数返回两个结果, 是否验证通过和错误码,
 Encode 系列函数需要注意, 当使用返回两个结果的函数时候,
 其返回的密钥串中不包含时间戳信息
 ```
+
+```
+
+func Example() {
+	tru := New("hello world, hello trust", 2) // 单位为 s
+	hashOne := tru.EncodeOne()
+
+	time.Sleep(time.Duration(1) * time.Second)
+	s1, e1 := tru.DecodeOne(hashOne)
+
+	time.Sleep(time.Duration(2) * time.Second)
+	s2, e2 := tru.DecodeOne(hashOne)
+
+	if s1 && e1 == nil && !s2 && e2 != nil {
+		fmt.Println("Good")
+	} else {
+		fmt.Println("Bad")
+	}
+	// output: Good
+}
+
+```
