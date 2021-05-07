@@ -1,13 +1,3 @@
-package trust
-
-import (
-	"crypto/md5"
-	"encoding/hex"
-	"strconv"
-	"strings"
-	"time"
-)
-
 /*
 一个简单认证模块, 防止接口完全公开被无脑调用
 
@@ -21,6 +11,29 @@ Decode 系列函数返回两个结果, 是否验证通过和错误码,
 Encode 系列函数需要注意, 当使用返回两个结果的函数时候,
 其返回的密钥串中不包含时间戳信息
 */
+
+package trust
+
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
+var (
+	lock sync.RWMutex
+
+	nowCache int64
+
+	nowCacheEncodeOne string
+
+	nowCacheStr          string
+	nowCacheEncode       string
+	nowCacheIntTimeStamp int
+)
 
 // EncryptedStringInvalid 非法的加密串
 type EncryptedStringInvalid struct{}
@@ -105,20 +118,32 @@ func (t *Trust) decode(hs string, tsStr string, tsInt int) (bool, error) {
 // EncodeOne 编码, 返回一个用于内网认证通信的密码
 // "-"分割,  eg: ts-hs
 func (t *Trust) EncodeOne() string {
-	hs, ts, _ := t.encode()
-	return ts + "-" + hs
+	t.isNewTime()
+	return nowCacheEncodeOne
 }
 
 // EncodeAtIntT 返回一个
 func (t *Trust) EncodeAtIntT() (hs string, ts int) {
-	hs, _, ts = t.encode()
-	return
+	t.isNewTime()
+	return nowCacheEncode, nowCacheIntTimeStamp
 }
 
 // EncodeAtStringT 返回一个
 func (t *Trust) EncodeAtStringT() (hs string, ts string) {
-	hs, ts, _ = t.encode()
-	return
+	t.isNewTime()
+	return nowCacheEncode, nowCacheStr
+}
+
+// isNewTime 是否是新的时间, 如果是新的时间则更新缓存中的变量
+func (t *Trust) isNewTime() {
+	now := time.Now().Unix()
+	if now > nowCache {
+		// lock.Lock()
+		nowCache = now
+		nowCacheEncode, nowCacheStr, nowCacheIntTimeStamp = t.encode()
+		nowCacheEncodeOne = nowCacheStr + "-" + nowCacheEncode
+		// lock.Unlock()
+	}
 }
 
 // encode 编码, 返回一个用于内网认证通信的密码
