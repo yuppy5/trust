@@ -19,20 +19,17 @@ import (
 	"encoding/hex"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
 var (
-	lock sync.RWMutex
+	nowCache int64 // 当前时间戳
 
-	nowCache int64
+	nowCacheEncodeOne string // 当前时间戳和hash结果组成的唯一验证串
 
-	nowCacheEncodeOne string
-
-	nowCacheStr          string
-	nowCacheEncode       string
-	nowCacheIntTimeStamp int
+	nowCacheStr          string // 当前时间戳的 string 形式
+	nowCacheEncode       string // 当前时间戳和盐的hash结果
+	nowCacheIntTimeStamp int    // 当前时间戳的 int 形式
 )
 
 // EncryptedStringInvalid 非法的加密串
@@ -138,11 +135,9 @@ func (t *Trust) EncodeAtStringT() (hs string, ts string) {
 func (t *Trust) isNewTime() {
 	now := time.Now().Unix()
 	if now > nowCache {
-		// lock.Lock()
 		nowCache = now
 		nowCacheEncode, nowCacheStr, nowCacheIntTimeStamp = t.encode()
 		nowCacheEncodeOne = nowCacheStr + "-" + nowCacheEncode
-		// lock.Unlock()
 	}
 }
 
