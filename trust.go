@@ -19,10 +19,13 @@ import (
 	"encoding/hex"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 var (
+	mu sync.Mutex // 锁, 保证线程安全
+
 	nowCache int64 // 当前时间戳
 
 	nowCacheEncodeOne string // 当前时间戳和hash结果组成的唯一验证串
@@ -133,12 +136,19 @@ func (t *Trust) EncodeAtStringT() (hs string, ts string) {
 
 // isNewTime 是否是新的时间, 如果是新的时间则更新缓存中的变量
 func (t *Trust) isNewTime() {
+	mu.Lock()
+
+	// 当前时间
 	now := time.Now().Unix()
+
+	// 是否缓存已经过期
 	if now > nowCache {
 		nowCache = now
 		nowCacheEncode, nowCacheStr, nowCacheIntTimeStamp = t.encode()
 		nowCacheEncodeOne = nowCacheStr + "-" + nowCacheEncode
 	}
+
+	mu.Unlock()
 }
 
 // encode 编码, 返回一个用于内网认证通信的密码
